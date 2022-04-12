@@ -1,0 +1,47 @@
+'''
+author:xiaotao
+time:2020.11.10-
+about: transform the original text of datasets (i.e. mirflckr25k, nuswide, microsoft coco2014 and iaprtc12) to 512-dimensional features  with pretrained transformers.
+'''
+
+import os
+import numpy as np
+import scipy.io as sio
+import tensorflow_hub as hub
+
+embed = hub.load('/home/models/universal-sentence-encoder/5')
+
+def gen_mirflickr25k_512tag(dataset_name):
+    if dataset_name.lower() == 'mirflickr25k':
+        path='/home/datasets/MIRFLICKR25K/mirflickr/meta/tags/'
+        files=os.listdir(path)
+        text_num=len(files)
+
+        texts_features=np.zeros((text_num,512),dtype=np.float)
+        count=0
+
+
+        for file in files:
+            print(file)
+            text_id=file.split('.')[0][4:]
+            position=path+file
+            text=''
+            with open(position,'r') as f:
+                for line in f.readlines():
+                    text=text+line.strip('\n')+' '
+
+            feature512=embed([text])
+            texts_features[int(text_id)-1,:]=feature512.numpy()
+            
+            print(count)
+            count = count + 1
+        sio.savemat('/home/datasets/MIRFLICKR25K/features512/taglist_universal_sentence.mat', mdict={'tags': texts_features})
+
+    else:
+        raise ValueError("there is no dataset name is %s" % dataset_name)
+
+
+if __name__ == '__main__':
+    gen_mirflickr25k_512tag('mirflickr25k')
+
+
